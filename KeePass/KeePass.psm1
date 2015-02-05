@@ -53,16 +53,16 @@ $PwDatabase.Open($m_ioInfo,$m_pKey,$IStatusLogger)
 #Create KeePass Output Object
 $KeePass = @()
 $KeePassEntries=$null
-#Create Objects for entry data
-$title = New-Object KeePassLib.Security.ProtectedString($true,$EntryTitle)
-$user = New-Object KeePassLib.Security.ProtectedString($true,$EntryUsername)
-$pass = New-Object KeePassLib.Security.ProtectedString($true,$EntryPassword)
-$url = New-Object KeePassLib.Security.ProtectedString($true,$EntryURL)
-$notes = New-Object KeePassLib.Security.ProtectedString($true,$EntryNotes)
-# Find/Create Location
-$Subtree=$PwDatabase.RootGroup.FindCreateSubTree($Location,$Separator,$true)
+# Find Location, setting last parameter to true creates the subfolder
+$Subtree=$PwDatabase.RootGroup.FindCreateSubTree($Location,$Separator,$false)
 #Get Items in Subtree
-$SubtreeItems = $Subtree.GetObjects($true, $true)
+try {
+	$SubtreeItems = $Subtree.GetObjects($true, $true)
+}
+catch {
+	Write-Error "Location Doesn't Exist"
+	break
+}
 # Loop through items in subtree to see if there is a match on title
 Foreach ($pwItem in $SubtreeItems)
 { 
