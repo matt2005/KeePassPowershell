@@ -196,3 +196,45 @@ $PwDatabase.Close()
 $KeePass
 }
 #endregion
+
+
+#region KeePass_Export_clixml
+<# example KeePass_Export_clixml `
+ -PathToKeePassFolder "C:\Program Files\KeePass" `
+ -PathToDB "C:\Temp\KeePassDB.kdbx" `
+ -Location "Test\\Tst1234" `
+ -Separator "\\" `
+ -EntryTitle "Test123" `
+ -Auth "KeyFile" `
+ -AuthKey "C:\Temp\KeePassDB.key" `
+ -OutputXML "C:\Temp\Cred.clixml"
+#>
+Function KeePass_Export_clixml
+{
+    [CmdletBinding()]
+    [OutputType([String[]])]
+
+    param(
+        [Parameter(Mandatory=$true)][String]$PathToKeePassFolder,
+        [Parameter(Mandatory=$true)][String]$PathToDB,
+		[Parameter(Mandatory=$true)][String]$Location,
+		[Parameter(Mandatory=$true)][String]$Separator,
+		[Parameter(Mandatory=$true)][String]$EntryTitle,
+		[Parameter(Mandatory=$true)][ValidateSet('Password','KeyFile','UserAccount')]$Auth,
+		# AuthKey used to open KeePass DB        
+        [String]$AuthKey,
+        [String]$OutputXML
+    )
+#Get KeePass Data
+$KeePassData=KeePass_Find_Entry `
+ -PathToKeePassFolder "$PathToKeePassFolder" `
+ -PathToDB "$PathToDB" `
+ -Location "$Location" `
+ -Separator "$Separator" `
+ -EntryTitle "$EntryTitle" `
+ -Auth "$Auth" `
+ -AuthKey "AuthKey"
+$PScredential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $KeePassData.Username,$($KeePassData.Password | ConvertTo-Securestring -AsPlainText -Force)
+$PScredential | export-clixml $OutputXML -Force
+}
+#endregion
