@@ -347,6 +347,7 @@ Function KeePass_Generate_password
         [switch]$SpecialASCII,
         [switch]$ExcludeLookAlike,
         [switch]$NoRepeatingCharacters,
+        [switch]$SecureOutput,
         [int]$PasswordLength=8
     )
 #Load all .NET binaries in the folder
@@ -367,5 +368,8 @@ $PWProfile.ExcludeLookAlike = $ExcludeLookAlike
 $PWProfile.Length = $PasswordLength
 $PWProfile.NoRepeatingCharacters = $NoRepeatingCharacters
 [KeePassLib.Cryptography.PasswordGenerator.PwGenerator]::Generate([ref]$ProtectedString,$PWProfile,$null,$PWPool)| out-null
-return $ProtectedString.ReadString()
+IF ($SecureOutput){
+    return $($ProtectedString.ReadString()| ConvertTo-Securestring -AsPlainText -Force)
+}
+Else {return $ProtectedString.ReadString()}
 }
