@@ -6,6 +6,7 @@ KeePass module enables to use and create data in KeePass DB
 
 #>
 #region KeePass_Find_Entry
+#region KeePass_Find_Entry
 <# example 
     The check to find a match on EntryTitle has been changed to use -like. This allows wildcards to be used to return multiple matches or single matches on a partially specified title.
  KeePass_Find_Entry `
@@ -66,20 +67,21 @@ catch {
 }
 # Loop through items in subtree to see if there is a match on title
 Foreach ($pwItem in $SubtreeItems)
-{ 
-	$Match = $false
-    
-    if ($EntryTitle -match '\*|\?') {if ($pwItem.Strings.ReadSafe('Title') -like $EntryTitle) {$Match = $true}}
-    else {if ($pwItem.Strings.ReadSafe('Title') -eq $EntryTitle) {$Match = $true}}
-    
-    if ($Match) {
-        $KeePassEntries = New-Object -TypeName PSObject
-		Add-Member -InputObject $KeePassEntries -MemberType NoteProperty -Name Title -Value $pwItem.Strings.ReadSafe('Title')
-		Add-Member -InputObject $KeePassEntries -MemberType NoteProperty -Name Username -Value $pwItem.Strings.ReadSafe('UserName')
-		Add-Member -InputObject $KeePassEntries -MemberType NoteProperty -Name Password -Value ($pwItem.Strings.ReadSafe('Password') | ConvertTo-SecureString -AsPlainText -Force)
-		Add-Member -InputObject $KeePassEntries -MemberType NoteProperty -Name URL -Value $pwItem.Strings.ReadSafe('URL')
-		Add-Member -InputObject $KeePassEntries -MemberType NoteProperty -Name Notes -Value $pwItem.Strings.ReadSafe('Notes')
-        $KeePass += $KeePassEntries
+{
+    IF ($pwItem.Expires -eq $false){
+        $Match = $false
+        if ($EntryTitle -match '\*|\?') {if ($pwItem.Strings.ReadSafe('Title') -like $EntryTitle) {$Match = $true}}
+        else {if ($pwItem.Strings.ReadSafe('Title') -eq $EntryTitle) {$Match = $true}}
+        
+        if ($Match) {
+            $KeePassEntries = New-Object -TypeName PSObject
+            Add-Member -InputObject $KeePassEntries -MemberType NoteProperty -Name Title -Value $pwItem.Strings.ReadSafe('Title')
+            Add-Member -InputObject $KeePassEntries -MemberType NoteProperty -Name Username -Value $pwItem.Strings.ReadSafe('UserName')
+            Add-Member -InputObject $KeePassEntries -MemberType NoteProperty -Name Password -Value ($pwItem.Strings.ReadSafe('Password') | ConvertTo-SecureString -AsPlainText -Force)
+            Add-Member -InputObject $KeePassEntries -MemberType NoteProperty -Name URL -Value $pwItem.Strings.ReadSafe('URL')
+            Add-Member -InputObject $KeePassEntries -MemberType NoteProperty -Name Notes -Value $pwItem.Strings.ReadSafe('Notes')
+            $KeePass += $KeePassEntries
+        }
     }
 }
 
@@ -157,22 +159,24 @@ $SubtreeItems = $Subtree.GetObjects($true, $true)
 # Loop through items in subtree to see if there is a match on title then update it if not add it
 Foreach ($pwItem in $SubtreeItems)
 { 
-	if ($pwItem.Strings.ReadSafe('Title') -eq $EntryTitle) {
-        IF ($Overwrite) {
-			$pwItem.Strings.Set('UserName',$user)
-			$pwItem.Strings.Set('Password',$pass)
-			$pwItem.Strings.Set('URL',$URL)
-			$pwItem.Strings.Set('Notes',$Notes)
-            #Save the entry to the database
-            $PwDatabase.Save($IStatusLogger)
+    IF ($pwItem.Expires -eq $false){
+        if ($pwItem.Strings.ReadSafe('Title') -eq $EntryTitle) {
+            IF ($Overwrite) {
+                $pwItem.Strings.Set('UserName',$user)
+                $pwItem.Strings.Set('Password',$pass)
+                $pwItem.Strings.Set('URL',$URL)
+                $pwItem.Strings.Set('Notes',$Notes)
+                #Save the entry to the database
+                $PwDatabase.Save($IStatusLogger)
+            }
+            $KeePassEntries = New-Object -TypeName PSObject
+            Add-Member -InputObject $KeePassEntries -MemberType NoteProperty -Name Title -Value $pwItem.Strings.ReadSafe('Title')
+            Add-Member -InputObject $KeePassEntries -MemberType NoteProperty -Name Username -Value $pwItem.Strings.ReadSafe('UserName')
+            Add-Member -InputObject $KeePassEntries -MemberType NoteProperty -Name Password -Value $pwItem.Strings.ReadSafe('Password')
+            Add-Member -InputObject $KeePassEntries -MemberType NoteProperty -Name URL -Value $pwItem.Strings.ReadSafe('URL')
+            Add-Member -InputObject $KeePassEntries -MemberType NoteProperty -Name Notes -Value $pwItem.Strings.ReadSafe('Notes')
+            $KeePass += $KeePassEntries
         }
-        $KeePassEntries = New-Object -TypeName PSObject
-		Add-Member -InputObject $KeePassEntries -MemberType NoteProperty -Name Title -Value $pwItem.Strings.ReadSafe('Title')
-		Add-Member -InputObject $KeePassEntries -MemberType NoteProperty -Name Username -Value $pwItem.Strings.ReadSafe('UserName')
-		Add-Member -InputObject $KeePassEntries -MemberType NoteProperty -Name Password -Value $pwItem.Strings.ReadSafe('Password')
-		Add-Member -InputObject $KeePassEntries -MemberType NoteProperty -Name URL -Value $pwItem.Strings.ReadSafe('URL')
-		Add-Member -InputObject $KeePassEntries -MemberType NoteProperty -Name Notes -Value $pwItem.Strings.ReadSafe('Notes')
-        $KeePass += $KeePassEntries
     }
 }
 # 
@@ -202,7 +206,6 @@ $PwDatabase.Close()
 $KeePass
 }
 #endregion
-
 
 #region KeePass_Export_clixml
 <# example 
