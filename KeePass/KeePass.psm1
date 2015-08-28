@@ -333,6 +333,7 @@ rules. The rules will be display because Debug is set.
     } # Main processing loop. Runs multiple times for the pipeline input
 }
 
+
 Function KeePass_Generate_password
 {
     [CmdletBinding()]
@@ -348,6 +349,7 @@ Function KeePass_Generate_password
         [switch]$ExcludeLookAlike,
         [switch]$NoRepeatingCharacters,
         [switch]$SecureOutput,
+        [switch]$FirstCharAlpha,
         [int]$PasswordLength=8
     )
 #Load all .NET binaries in the folder
@@ -368,8 +370,18 @@ $PWProfile.ExcludeLookAlike = $ExcludeLookAlike
 $PWProfile.Length = $PasswordLength
 $PWProfile.NoRepeatingCharacters = $NoRepeatingCharacters
 [KeePassLib.Cryptography.PasswordGenerator.PwGenerator]::Generate([ref]$ProtectedString,$PWProfile,$null,$PWPool)| out-null
+$Password=$ProtectedString.ReadString()
+If ($FirstCharAlpha) {
+    [regex]$FirstCharAlpha="[a-zA-Z]"
+    IF ($FirstCharAlpha.Match($Password)) {
+        $charList=@()
+        $charlist+=97..122 | %{ [Char] $_ } #Lower
+        $charlist+=65..90 | %{ [Char] $_ } #Upper
+        $Password=('{0}{1}' -f $charlist[(get-random -Maximum 52)], $Password.Substring(1,($Password.Length-1)) )
+        }
+    } #FirstCharAlpha
 IF ($SecureOutput){
-    return $($ProtectedString.ReadString()| ConvertTo-Securestring -AsPlainText -Force)
+    return $($Password| ConvertTo-Securestring -AsPlainText -Force)
 }
-Else {return $ProtectedString.ReadString()}
+Else {return $Password}
 }
