@@ -5,7 +5,7 @@ Updated:2015-08-21 Added Generate password function
 KeePass module enables to use and create data in KeePass DB
 
 #>
-#region KeePass_Find_Entry
+
 #region KeePass_Find_Entry
 <# example 
     The check to find a match on EntryTitle has been changed to use -like. This allows wildcards to be used to return multiple matches or single matches on a partially specified title.
